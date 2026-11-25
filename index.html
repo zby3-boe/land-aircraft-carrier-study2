@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>亿航智能 EH216-S 无人驾驶载人 eVTOL 全方位系统安全分析 | FVT 2026</title>
+  <meta name="description" content="针对全球首个集齐 TC/AC/PC/OC 四证的无人驾驶载人 eVTOL 亿航 EH216-S 开展系统安全工程分析，涵盖全备份冗余架构、FHA、STPA、16 旋翼 FTA、DFMEA/CCA、SOTIF、4G/5G 信息安全 TARA 与 GSN 安全论据。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="fv-page" lang="zh-CN">
+  <div class="fv-progress" id="readingProgress" aria-hidden="true"></div>
+
+  <nav class="lab-nav fv-nav" id="caseNav" aria-label="主导航">
+    <div class="lab-nav-inner">
+      <a href="#top" class="lab-nav-brand">
+        <span class="lab-nav-badge">FVT 2026 · EH216-S</span>
+        <span class="cn">飞行汽车技术基础 · 作业-2 系统安全分析</span>
+        <span class="en">FVT 2026 · EH216-S System Safety Analysis</span>
+      </a>
+      <button class="lab-nav-toggle" onclick="toggleNav()" aria-label="Toggle Navigation">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="lab-nav-links">
+        <li><a href="#scope"><span class="cn">适航边界</span><span class="en">Scope</span></a></li>
+        <li><a href="#fha"><span class="cn">FHA与ODD</span><span class="en">FHA &amp; ODD</span></a></li>
+        <li><a href="#stpa"><span class="cn">STPA</span><span class="en">STPA</span></a></li>
+        <li><a href="#fta-fmea"><span class="cn">16桨FTA/CCA</span><span class="en">FTA/CCA</span></a></li>
+        <li><a href="#sotif"><span class="cn">SOTIF</span><span class="en">SOTIF</span></a></li>
+        <li><a href="#cyber"><span class="cn">热安全/网安</span><span class="en">Thermal/Cyber</span></a></li>
+        <li><a href="#gsn"><span class="cn">GSN论据</span><span class="en">GSN Case</span></a></li>
+        <li><a href="#references"><span class="cn">参考文献</span><span class="en">Refs</span></a></li>
+        <li><button type="button" class="nav-action-btn" onclick="window.print()"><span class="cn">打印/PDF</span><span class="en">Print/PDF</span></button></li>
+        <li class="lab-lang-switch"><a href="#" onclick="toggleLang();return false;" id="langBtn">EN</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="fv-article-hero">
+      <div class="container fv-article-hero-grid">
+        <div class="fv-article-hero-copy">
+          <p class="fv-kicker">
+            <span class="cn">飞行汽车技术基础（2026）· 课程作业-2 深度安全工程研究</span>
+            <span class="en">Fundamentals of Flying Vehicle Technology (2026) · Assignment 2 Safety Study</span>
+          </p>
+          <h1 class="fv-article-title">
+            <span class="cn">亿航智能 EH216-S：无人驾驶载人 eVTOL 的全备份冗余安全与商业运营边界分析</span>
+            <span class="en">EHang EH216-S: Full-Redundancy System Safety &amp; Commercial OC Boundary Analysis</span>
+          </h1>
+          <p class="fv-deck cn">
+            作为全球首个集齐型号合格证（TC）、标准适航证（AC）、生产许可证（PC）与运营合格证（OC）的无人驾驶载人 eVTOL，EH216-S 的安全哲学与传统有人驾驶飞行汽车截然不同：它彻底取消了机载飞行员，把安全重担全部交给了“8 轴 16 旋翼共轴推进 + 12 组独立智能电池 + 表决飞控 + 4G/5G 地面指挥调度”。本文剖析其如何用硬件全备份换取“无人可误操作”的收益，又在共因失效（CCF）、共轴断桨级联、城市备降场密度与信息安全上留下哪些严苛边界。
+          </p>
+          <p class="fv-deck en">
+            As the world's first pilotless passenger eVTOL to hold CAAC TC, AC, PC, and OC approvals, the EHang EH216-S embodies a fundamentally different safety philosophy: removing the onboard pilot entirely and shifting safety assurance onto 16 coaxial motors, 12 independent battery packs, voting flight computers, and a 4G/5G ground command center. This study audits its redundancy gains alongside residual CCF, coaxial cascade, emergency landing pad, and cyber risks.
+          </p>
+          <div class="fv-byline">
+            <span><span class="cn">分析对象：EHang EH216-S（8 轴 16 桨无人驾驶）</span><span class="en">Subject: EHang EH216-S (16-Rotor Autonomous)</span></span>
+            <span><span class="cn">核心取证：TC / AC / PC / OC 四证齐全</span><span class="en">Status: CAAC TC, AC, PC &amp; OC Certified</span></span>
+            <span><span class="cn">证据截止：2026-11-23</span><span class="en">Baseline: 2026-11-23</span></span>
+          </div>
+        </div>
+
+        <!-- Custom Vector SVG #0: Autonomous Redundancy Architecture -->
+        <figure class="fv-hero-visual">
+          <svg viewBox="0 0 640 420" role="img" aria-label="亿航 EH216-S 无人驾驶全备份冗余安全架构图">
+            <defs>
+              <pattern id="gridEh" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#163b38" stroke-width="0.6"/>
+              </pattern>
+            </defs>
+            <rect width="640" height="420" fill="#0b2624"/>
+            <rect width="640" height="420" fill="url(#gridEh)"/>
+
+            <text x="20" y="26" fill="#7cd9cc" font-family="ui-monospace, monospace" font-size="10.5" font-weight="700">AUTONOMOUS SAFETY ARCHITECTURE // EH216-S (NO ONBOARD PILOT)</text>
+            <line x1="20" y1="36" x2="620" y2="36" stroke="#21544f" stroke-width="1"/>
+
+            <!-- Central Coaxial 8-Arm Schematic -->
+            <g transform="translate(150, 175)">
+              <circle cx="0" cy="0" r="95" fill="none" stroke="#2c6b64" stroke-width="1" stroke-dasharray="4,3"/>
+              <!-- 8 arms -->
+              <line x1="-88" y1="0" x2="88" y2="0" stroke="#7cd9cc" stroke-width="2.5"/>
+              <line x1="0" y1="-88" x2="0" y2="88" stroke="#7cd9cc" stroke-width="2.5"/>
+              <line x1="-62" y1="-62" x2="62" y2="62" stroke="#7cd9cc" stroke-width="2.5"/>
+              <line x1="-62" y1="62" x2="62" y2="-62" stroke="#7cd9cc" stroke-width="2.5"/>
+              <!-- 8 Coaxial Rotor Pairs -->
+              <g fill="#164540" stroke="#7cd9cc" stroke-width="1.5">
+                <circle cx="88" cy="0" r="14"/><circle cx="-88" cy="0" r="14"/>
+                <circle cx="0" cy="88" r="14"/><circle cx="0" cy="-88" r="14"/>
+                <circle cx="62" cy="62" r="14"/><circle cx="-62" cy="-62" r="14"/>
+                <circle cx="62" cy="-62" r="14"/><circle cx="-62" cy="62" r="14"/>
+              </g>
+              <g fill="#d7f3ef" font-size="8.5" font-family="ui-monospace, monospace" text-anchor="middle">
+                <text x="88" y="3">2×EPU</text><text x="-88" y="3">2×EPU</text>
+                <text x="0" y="91">2×EPU</text><text x="0" y="-85">2×EPU</text>
+                <text x="62" y="65">2×EPU</text><text x="-62" y="-59">2×EPU</text>
+                <text x="62" y="-59">2×EPU</text><text x="-62" y="65">2×EPU</text>
+              </g>
+              <!-- Fuselage -->
+              <ellipse cx="0" cy="0" rx="38" ry="26" fill="#18524c" stroke="#c4efe9" stroke-width="2"/>
+              <text x="0" y="-3" fill="#ffffff" font-size="9.5" font-weight="700" text-anchor="middle" font-family="sans-serif">2-Seat</text>
+              <text x="0" y="10" fill="#a8e6de" font-size="8.5" text-anchor="middle" font-family="sans-serif">无人驾驶座舱</text>
+            </g>
+
+            <!-- Right Side Safety Pillars -->
+            <g font-family="sans-serif">
+              <rect x="305" y="54" width="315" height="66" fill="#123835" stroke="#479e93"/>
+              <text x="318" y="75" fill="#7cd9cc" font-size="11" font-weight="700">1. 推进与能源全备份 (16 Motors + 12 Packs)</text>
+              <text x="318" y="93" fill="#d7f3ef" font-size="9.5">• 8 臂上下共轴 16 独立电机，支持多桨容错安全着陆</text>
+              <text x="318" y="109" fill="#d7f3ef" font-size="9.5">• 12 组独立智能电池 (~17 kWh) + 独立 BMS 隔离故障包</text>
+
+              <rect x="305" y="134" width="315" height="66" fill="#123835" stroke="#479e93"/>
+              <text x="318" y="155" fill="#7cd9cc" font-size="11" font-weight="700">2. 多余度表决飞控与 Fail-Safe 策略</text>
+              <text x="318" y="173" fill="#d7f3ef" font-size="9.5">• 多套飞控实时交叉表决，故障毫秒级无扰切换</text>
+              <text x="318" y="189" fill="#d7f3ef" font-size="9.5">• 取消机载操纵杆：彻底根除个人飞行员误操作风险</text>
+
+              <rect x="305" y="214" width="315" height="66" fill="#1b3022" stroke="#d99a42"/>
+              <text x="318" y="235" fill="#f2b866" font-size="11" font-weight="700">3. 4G/5G 地面指挥调度 &amp; 失联自主降落</text>
+              <text x="318" y="253" fill="#fce3be" font-size="9.5">• 预设航线自主飞行 + 地面调度中心实时监控介入</text>
+              <text x="318" y="269" fill="#fce3be" font-size="9.5">• 关键边界：城市 C2 遮挡与备降点密度决定 OC 放行范围</text>
+            </g>
+
+            <!-- Bottom Cert Strip -->
+            <rect x="20" y="302" width="600" height="98" fill="#0f302d" stroke="#2c6b64"/>
+            <text x="34" y="324" fill="#7cd9cc" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">CAAC CERTIFICATION &amp; OPERATIONAL SAFETY ENVELOPE (2022–2026)</text>
+            <text x="34" y="346" fill="#d7f3ef" font-size="10" font-family="sans-serif">• 2022-02 专用条件 → 2023-10 TC → 2023-12 AC → 2024-03/04 PC → 2025-03-28 首批 OC 运营合格证</text>
+            <text x="34" y="366" fill="#d7f3ef" font-size="10" font-family="sans-serif">• MTOW 620 kg · 巡航 90–100 km/h · 航程 30 km (20–25 min) · 最大运行高度 200 m AGL</text>
+            <text x="34" y="386" fill="#f2b866" font-size="10" font-family="sans-serif">• 核心安全焦点：16桨共轴断桨交互 + 12组电池快充热管理 + 无人驾驶无应急降落伞下的迫降点约束</text>
+          </svg>
+          <figcaption>
+            <span class="cn">图 0：亿航 EH216-S 无人驾驶载人 eVTOL 安全架构全景。与有人驾驶 6 旋翼不同，EH216-S 以高度硬件冗余（16 电机 + 12 电池）与地面站协同换取无飞行员条件下的商载适航。</span>
+            <span class="en">Figure 0: Autonomous safety architecture of the EHang EH216-S, trading onboard human pilots for 16-rotor propulsion, 12-pack battery redundancy, voting FCCs, and 4G/5G ground-station supervision.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <div class="container fv-article-shell">
+      <nav class="fv-toc" aria-label="文章目录">
+        <p class="fv-toc-title"><span class="cn">安全分析目录</span><span class="en">Safety Contents</span></p>
+        <ol>
+          <li><a href="#summary"><span class="cn">执行摘要</span><span class="en">Executive Summary</span></a></li>
+          <li><a href="#scope">01 <span class="cn">无人驾驶适航与边界</span><span class="en">Scope &amp; Certification</span></a></li>
+          <li><a href="#fha">02 <span class="cn">FHA 与运行 ODD 计算</span><span class="en">FHA &amp; ODD Margin</span></a></li>
+          <li><a href="#stpa">03 <span class="cn">STPA 控制结构与 UCA</span><span class="en">STPA &amp; UCAs</span></a></li>
+          <li><a href="#fta-fmea">04 <span class="cn">16 桨 FTA、DFMEA 与 CCA</span><span class="en">16-Rotor FTA &amp; CCA</span></a></li>
+          <li><a href="#sotif">05 <span class="cn">无驾驶员 SOTIF 与舱内误用</span><span class="en">Autonomous SOTIF</span></a></li>
+          <li><a href="#cyber">06 <span class="cn">电池热安全与 4G/5G 网安</span><span class="en">Thermal &amp; C2 Cyber</span></a></li>
+          <li><a href="#vv">07 <span class="cn">V&amp;V 与 OC 持续适航</span><span class="en">V&amp;V &amp; OC Ops</span></a></li>
+          <li><a href="#gsn">08 <span class="cn">GSN 安全论据与门控核查</span><span class="en">GSN Case &amp; Gates</span></a></li>
+          <li><a href="#recommendations">09 <span class="cn">分级安全改进建议</span><span class="en">Recommendations</span></a></li>
+          <li><a href="#references"><span class="cn">参考文献</span><span class="en">References</span></a></li>
+        </ol>
+      </nav>
+
+      <article class="fv-article">
+        <section class="fv-executive" id="summary">
+          <h2><span class="cn">安全分析执行摘要</span><span class="en">Safety Executive Summary</span></h2>
+          <ol>
+            <li>
+              <span class="cn"><strong>“去飞行员化”的安全收益与代价：</strong>EH216-S 彻底移除机载操纵杆与飞行员，从根源上消除了传统通航事故中占比极高的“飞行员空间定向障碍与误操作”；但其代价是机载自主系统（多传感器+飞控表决）与地面 4G/5G 指挥调度链路必须承担全部极端气象、备降决策与突发避障责任。</span>
+              <span class="en"><strong>Pilotless Trade-off:</strong> Removing the onboard pilot eliminates human spatial disorientation and stick errors, but shifts full responsibility for weather avoidance, emergency diversion, and fault handling onto autonomous voting avionics and 4G/5G ground-station supervision.</span>
+            </li>
+            <li>
+              <span class="cn"><strong>16 旋翼共轴冗余的数学优势与共因瓶颈：</strong>定量最小割集仿真显示，8 臂 16 桨配置使独立随机硬件单发失效导致的坠机率被压缩至极低水平；然而，<strong>同臂上下共轴桨叶的机械碎裂级联</strong>与<strong>飞控/电调同源软件共因因子（β）</strong>成为决定顶事件概率能否稳定跨过 10⁻⁸–10⁻⁹/fh 的真正主导因素。</span>
+              <span class="en"><strong>16-Rotor Redundancy vs. CCF:</strong> While 16 motors nearly eliminate independent single-rotor catastrophic risk, coaxial blade-strike cascades within the same arm and shared software/inverter β-factors dominate top-event failure probability.</span>
+            </li>
+            <li>
+              <span class="cn"><strong>12 组独立电池与 ~17 kWh 能量约束下的安全裕度：</strong>EH216-S 采用 12 组冗余锂电池包实现单包隔离不停机，但液态锂电 20–25 min 航时意味着若备降场间距过大或遇到逆风，可用于 4G/5G 失联后盘旋等待或改降的能量余量极其紧凑（~120 min 充电周期亦考验高周转运营热管理）。</span>
+              <span class="en"><strong>12-Pack Battery &amp; Energy Margin:</strong> Twelve isolated packs tolerate single-pack loss, yet the ~17 kWh (20–25 min) envelope leaves tight divert reserves in headwinds, making dense emergency landing pads mandatory under OC operations.</span>
+            </li>
+            <li>
+              <span class="cn"><strong>OC 运营落地结论：</strong>2025 年 3 月 CAAC 首批运营合格证（OC）的颁发证明 EH216-S 在<strong>划定景区低空观光航线、封闭视距/预勘空域与充足备降场</strong>条件下安全论据已充分闭环；但若向高密度城市中心复杂建筑群随机航线扩展，仍需强化 5G-A/卫星双链通信冗余、非合作障碍主动避撞以及乘客舱内紧急行为干预规范。</span>
+              <span class="en"><strong>OC Operational Verdict:</strong> The March 2025 CAAC OC approvals confirm a closed safety case for designated scenic corridors and pre-surveyed routes with dense landing pads; scaling into dense urban canyons demands stronger C2 diversity, active non-cooperative obstacle avoidance, and cabin passenger-intervention safeguards.</span>
+            </li>
+          </ol>
+        </section>
+
+        <div class="fv-stat-band" aria-label="EH216-S 核心安全指标">
+          <div>
+            <strong>四证齐全</strong>
+            <span class="cn">TC(2023.10) · AC(2023.12) · PC(2024.03) · OC(2025.03.28)</span>
+            <span class="en">TC (Oct 2023) · AC (Dec 2023) · PC (Mar 2024) · OC (Mar 2025)</span>
+          </div>
+          <div>
+            <strong>8 臂 16 桨</strong>
+            <span class="cn">上下共轴分布式电推进，单电机/单桨失效具备受控降落能力</span>
+            <span class="en">Coaxial 8-arm 16-rotor DEP tolerant of single/multi-motor loss</span>
+          </div>
+          <div>
+            <strong>12 组电池</strong>
+            <span class="cn">约 17 kWh 独立冗余电池包，单组故障自动隔离供电</span>
+            <span class="en">~17 kWh split across 12 independent packs with smart BMS isolation</span>
+          </div>
+          <div>
+            <strong>620 kg / 200 m</strong>
+            <span class="cn">最大起飞重量 620 kg，典型运行高度 ≤ 200 m AGL，航程 30 km</span>
+            <span class="en">620 kg MTOW, typical ceiling ≤ 200 m AGL, 30 km design range</span>
+          </div>
+        </div>
+
+        <!-- Section 01 -->
+        <h2 id="scope"><span class="cn">01 无人驾驶适航审定特殊性与系统安全边界</span><span class="en">01 Pilotless Airworthiness &amp; System Safety Boundaries</span></h2>
+        <p class="cn">
+          2022 年 2 月中国民航局正式生效的《亿航 EH216-S 型无人驾驶航空器系统专用条件》<sup><a class="fv-citation" href="#ref1">[1]</a></sup>开创了“无在机驾驶员”载人航空器的适航先河。与常规有人机（依赖飞行员目视、操纵杆接管和无线电通话）不同，EH216-S 必须在设计阶段用<strong>确定性的机载自动逻辑 + 地面指挥调度中心（GCS）</strong>完整替代飞行员的感知、判断与处置职能<sup><a class="fv-citation" href="#ref2">[2]</a></sup><sup><a class="fv-citation" href="#ref3">[3]</a></sup>。
+        </p>
+        <p class="en">
+          CAAC's Special Conditions for the EH216-S AAV (effective Feb 2022)<sup><a class="fv-citation" href="#ref1">[1]</a></sup> established the world's first passenger-carrying uncrewed airworthiness baseline. Without an onboard pilot to sense hazards or override automation, EH216-S replaces human airmanship with deterministic onboard voting computers, fail-safe diversion logic, and a 4G/5G Ground Control Station<sup><a class="fv-citation" href="#ref2">[2]</a></sup><sup><a class="fv-citation" href="#ref3">[3]</a></sup>.
+        </p>
+        <div class="fv-table-wrap">
+          <table class="fv-table">
+            <thead>
+              <tr>
+                <th><span class="cn">安全维度</span><span class="en">Safety Dimension</span></th>
+                <th><span class="cn">传统有人驾驶 eVTOL 依赖</span><span class="en">Piloted eVTOL Reliance</span></th>
+                <th><span class="cn">EH216-S 无人驾驶替代与安全要求</span><span class="en">EH216-S Autonomous Replacement</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><span class="cn">航迹控制与故障处置</span><span class="en">Trajectory &amp; Fault Handling</span></strong></td>
+                <td><span class="cn">飞行员通过侧杆/单杆手动修正姿态或改降</span><span class="en">Pilot manually adjusts stick and selects divert pad</span></td>
+                <td><span class="cn">预设航线自动飞行 + 飞控表决自动触发返航/就近备降场垂直降落</span><span class="en">Pre-programmed route + voting FCC triggers auto-RTH or nearest-pad landing</span></td>
+              </tr>
+              <tr>
+                <td><strong><span class="cn">空地通信与接管</span><span class="en">Air-Ground C2 Link</span></strong></td>
+                <td><span class="cn">VHF 语音通话，断联后飞行员仍可独立驾驶</span><span class="en">VHF voice; pilot flies independently if link drops</span></td>
+                <td><span class="cn">4G/5G 双链实时传输至调度中心；超时失联必须触发机载自主 Fail-Safe 着陆</span><span class="en">Dual 4G/5G C2 link to GCS; timeout forces autonomous Fail-Safe landing</span></td>
+              </tr>
+              <tr>
+                <td><strong><span class="cn">乘员与应急响应</span><span class="en">Cabin &amp; Emergency</span></strong></td>
+                <td><span class="cn">飞行员控制舱门锁止与应急撤离口令</span><span class="en">Pilot supervises cabin latches and emergency egress</span></td>
+                <td><span class="cn">全自动座舱安全带/舱门闭锁检测 + 地面调度一键应急广播与落地解锁</span><span class="en">Automated seat/door interlocks + GCS voice link &amp; post-landing release</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 02 -->
+        <h2 id="fha"><span class="cn">02 功能危险性分析（FHA）与无人驾驶 ODD 备降裕度</span><span class="en">02 Aviation FHA &amp; Autonomous Divert Margin Simulator</span></h2>
+        <p class="cn">
+          参照 <code>SAE ARP4761A</code><sup><a class="fv-citation" href="#ref4">[4]</a></sup> 对 EH216-S 开展整机级 FHA：由于缺少在机飞行员兜底，凡涉及“全机导航丢失”、“通信失联叠加备降点不可用”以及“同臂共轴机械断桨干涉”的危害均须按最高保障等级（DAL A/B）控险。
+        </p>
+        <p class="en">
+          Applying <code>SAE ARP4761A</code><sup><a class="fv-citation" href="#ref4">[4]</a></sup> to EH216-S, hazards involving total navigation loss, C2 outage over unlandable terrain, or coaxial blade-strike cascades must meet DAL A/B assurance targets.
+        </p>
+
+        <div class="fv-table-wrap">
+          <table class="fv-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th><span class="cn">失效状态</span><span class="en">Failure Condition</span></th>
+                <th><span class="cn">整机影响</span><span class="en">Effect</span></th>
+                <th><span class="cn">危险等级</span><span class="en">Severity</span></th>
+                <th><span class="cn">目标概率 / 措施</span><span class="en">Objective / Mitigation</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>FHA-01</code></td>
+                <td><span class="cn">多套表决飞控共模软件死锁</span><span class="en">Voting FCC common-mode lockup</span></td>
+                <td><span class="cn">无人在机接管，整机姿态失控</span><span class="en">Unrecoverable attitude loss with no pilot</span></td>
+                <td><span class="fv-badge fv-badge-critical">Catastrophic</span></td>
+                <td>≤ 10⁻⁹/fh · DO-178C DAL A 异构备份</td>
+              </tr>
+              <tr>
+                <td><code>FHA-02</code></td>
+                <td><span class="cn">单臂上桨叶折断击中同臂下桨</span><span class="en">Upper blade fractures into lower coaxial rotor</span></td>
+                <td><span class="cn">单臂全失升力并波及邻臂碳纤维结构</span><span class="en">Dual-rotor loss on one arm + structural hit</span></td>
+                <td><span class="fv-badge fv-badge-critical">Catastrophic</span></td>
+                <td>≤ 10⁻⁹/fh · 桨叶静/动强度裕度 + 邻臂防护</td>
+              </tr>
+              <tr>
+                <td><code>FHA-03</code></td>
+                <td><span class="cn">4G/5G 链路中断且预设备降点被临时占用</span><span class="en">C2 link lost while emergency pad is occupied</span></td>
+                <td><span class="cn">自主迫降撞击地面障碍或人员</span><span class="en">Autonomous descent onto obstacle/bystander</span></td>
+                <td><span class="fv-badge fv-badge-high">Hazardous</span></td>
+                <td>≤ 10⁻⁷/fh · 机载视觉着陆区净空识别</td>
+              </tr>
+              <tr>
+                <td><code>FHA-04</code></td>
+                <td><span class="cn">12 组电池中 1–2 组单体热失控或欠压</span><span class="en">Thermal runaway or drop in 1–2 of 12 packs</span></td>
+                <td><span class="cn">局部功率降级，需立即中止观光并改降</span><span class="en">Partial power derating; immediate divert</span></td>
+                <td><span class="fv-badge fv-badge-med">Major</span></td>
+                <td>≤ 10⁻⁵/fh · 独立 BMS 接触器切断 + 防火隔层</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Widget #1: Autonomous ODD & Divert Margin -->
+        <section class="sim-card" id="ehang-odd-calc" aria-label="EH216-S 无人驾驶 ODD 与备降安全裕度计算器">
+          <div class="sim-header">
+            <h4>
+              <span class="cn">交互式无人驾驶运行边界（ODD）与备降能量裕度评估器</span>
+              <span class="en">Interactive Autonomous ODD &amp; Divert Energy Margin Calculator</span>
+            </h4>
+          </div>
+          <div class="sim-grid">
+            <div class="sim-controls">
+              <div class="sim-control">
+                <label><span><span class="cn">环境逆风风速</span><span class="en">Headwind Speed</span></span><span class="val" id="valOddWind">6 m/s</span></label>
+                <input type="range" id="oddWind" min="0" max="16" step="1" value="6">
+                <small><span class="cn">典型景区轻型多旋翼放行风限 ≤ 10–12 m/s</span><span class="en">Typical commercial scenic dispatch wind cap ≤ 10–12 m/s</span></small>
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">4G/5G C2 链路最大允许中断时间</span><span class="en">Max C2 Link Outage Duration</span></span><span class="val" id="valOddC2">5 s</span></label>
+                <input type="range" id="oddC2Drop" min="1" max="25" step="1" value="5">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">航线沿途最近可用备降场距离</span><span class="en">Nearest Emergency Pad Distance</span></span><span class="val" id="valOddPad">1.5 km</span></label>
+                <input type="range" id="oddPadDist" min="0.5" max="6.0" step="0.5" value="1.5">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">触发强制改降的最低电量储备 (SOC)</span><span class="en">Reserve SOC Trigger for Divert</span></span><span class="val" id="valOddSoc">25%</span></label>
+                <input type="range" id="oddSocMin" min="15" max="40" step="5" value="25">
+              </div>
+            </div>
+            <div class="sim-results">
+              <div class="sim-metric">
+                <span class="lbl"><span class="cn">逆风改降至备降场耗时</span><span class="en">Headwind Divert Flight Time</span></span>
+                <strong class="num" id="outOddDivertTime">—</strong>
+              </div>
+              <div class="sim-metric">
+                <span class="lbl"><span class="cn">着陆前剩余能量悬停裕度</span><span class="en">Energy Margin Above Pad</span></span>
+                <strong class="num" id="outOddMargin">—</strong>
+              </div>
+              <div class="sim-metric wide" id="outOddBox">
+                <span class="lbl"><span class="cn">OC 调度中心放行决策</span><span class="en">OC Dispatch Safety Decision</span></span>
+                <strong class="num" style="font-size:13.5px;" id="outOddVerdict">—</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 03 -->
+        <h2 id="stpa"><span class="cn">03 STPA 控制结构与无驾驶员不安全控制行为（UCA）</span><span class="en">03 STPA Control Structure &amp; Pilotless UCAs</span></h2>
+        <p class="cn">
+          依据 MIT <code>STPA Handbook</code><sup><a class="fv-citation" href="#ref5">[5]</a></sup> 建立 EH216-S 分层安全控制结构：地面指挥调度中心与机载飞控并非简单的主从遥控关系，而是<strong>“调度中心战略规划/应急接管 + 机载表决飞控战术闭环”</strong>的双层结构。
+        </p>
+        <p class="en">
+          Following the MIT <code>STPA Handbook</code><sup><a class="fv-citation" href="#ref5">[5]</a></sup>, EH216-S separates strategic GCS dispatch/override from tactical onboard voting stabilization.
+        </p>
+
+        <!-- Custom Vector SVG #1: STPA Control Structure -->
+        <figure class="fv-figure">
+          <svg viewBox="0 0 760 320" role="img" aria-label="亿航 EH216-S STPA 无人驾驶分层安全控制结构图">
+            <defs>
+              <marker id="arrEh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#195e58"/>
+              </marker>
+              <marker id="arrEhM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#6b7280"/>
+              </marker>
+            </defs>
+            <rect width="760" height="320" fill="#fbfcfd"/>
+            <text x="18" y="22" fill="#0f3b38" font-size="11.5" font-weight="700" font-family="sans-serif">EH216-S STPA 控制结构：地面指挥调度 ↔ 机载表决飞控 ↔ 16 电机 / 12 电池</text>
+            <line x1="18" y1="30" x2="742" y2="30" stroke="#d6dde0"/>
+
+            <!-- Tier 1: Ground Control Station -->
+            <rect x="190" y="42" width="380" height="48" fill="#e7f1ef" stroke="#195e58" stroke-width="1.5"/>
+            <text x="380" y="62" fill="#0f3b38" font-size="11.5" font-weight="700" text-anchor="middle" font-family="sans-serif">地面指挥调度中心 (Ground Control Station / OC 运营席)</text>
+            <text x="380" y="78" fill="#466965" font-size="9.5" text-anchor="middle" font-family="sans-serif">航线预检放行 · 多机空域间隔调度 · 远程应急改降介入</text>
+
+            <!-- Link T1 <-> T2 -->
+            <line x1="320" y1="90" x2="320" y2="132" stroke="#195e58" stroke-width="1.5" marker-end="url(#arrEh)"/>
+            <text x="312" y="114" fill="#195e58" font-size="9" text-anchor="end" font-family="sans-serif">4G/5G 航线/备降指令</text>
+            <line x1="440" y1="132" x2="440" y2="90" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="3,2" marker-end="url(#arrEhM)"/>
+            <text x="448" y="114" fill="#5c636b" font-size="9" text-anchor="start" font-family="sans-serif">4G/5G 健康遥测/视频</text>
+
+            <!-- Tier 2: Onboard Voting FCC & Cabin Interlock -->
+            <rect x="45" y="134" width="310" height="54" fill="#ffffff" stroke="#195e58" stroke-width="1.4"/>
+            <text x="200" y="156" fill="#0f3b38" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">机载多余度表决飞控 (Voting FCC)</text>
+            <text x="200" y="173" fill="#5c636b" font-size="9.5" text-anchor="middle" font-family="sans-serif">GNSS/IMU/气压融合 · 失联 Fail-Safe 决策</text>
+
+            <rect x="405" y="134" width="310" height="54" fill="#fdf5e7" stroke="#c69148" stroke-width="1.4"/>
+            <text x="560" y="156" fill="#9a5b13" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">12 组智能 BMS + 座舱安全联锁</text>
+            <text x="560" y="173" fill="#5e4b2b" font-size="9.5" text-anchor="middle" font-family="sans-serif">单包故障隔离 · 安全带/舱门起飞闭锁</text>
+
+            <line x1="355" y1="161" x2="405" y2="161" stroke="#195e58" stroke-width="1.3"/>
+
+            <!-- Arrows T2 <-> T3 -->
+            <line x1="200" y1="188" x2="200" y2="232" stroke="#195e58" stroke-width="1.4" marker-end="url(#arrEh)"/>
+            <text x="192" y="214" fill="#195e58" font-size="9" text-anchor="end" font-family="sans-serif">16路独立 PWM 控制</text>
+            <line x1="560" y1="188" x2="560" y2="232" stroke="#195e58" stroke-width="1.4" marker-end="url(#arrEh)"/>
+            <text x="568" y="214" fill="#195e58" font-size="9" text-anchor="start" font-family="sans-serif">12路配电母线 / 隔离接触器</text>
+
+            <!-- Tier 3: Actuators -->
+            <rect x="45" y="234" width="670" height="62" fill="#0f3b38"/>
+            <text x="380" y="258" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">物理被控对象：8 臂 16 旋翼共轴电推进 + 2 座无人驾驶客舱</text>
+            <text x="380" y="278" fill="#9bdcd3" font-size="9.5" text-anchor="middle" font-family="sans-serif">无操纵杆 · 乘客仅可语音联系地面站或按压合法应急停靠请求（不可直接接管飞控）</text>
+          </svg>
+          <figcaption>
+            <span class="cn">图 1：EH216-S 无人驾驶分层安全控制结构。由于乘客不能直接操纵飞行，客舱安全带/舱门联锁与地面站 4G/5G 应急指令链路构成了核心安全边界。</span>
+            <span class="en">Figure 1: EH216-S STPA control structure showing GCS supervision, onboard voting FCCs, 12-pack BMS isolation, and passenger cabin interlocks.</span>
+          </figcaption>
+        </figure>
+
+        <div class="fv-filter-bar" id="stpaFilterBar">
+          <button type="button" class="fv-filter-btn active" onclick="filterStpa('all', this)"><span class="cn">全部 UCA (8)</span><span class="en">All UCAs (8)</span></button>
+          <button type="button" class="fv-filter-btn" onclick="filterStpa('c2', this)"><span class="cn">4G/5G 通信与调度 (3)</span><span class="en">C2 &amp; Dispatch (3)</span></button>
+          <button type="button" class="fv-filter-btn" onclick="filterStpa('prop', this)"><span class="cn">16 桨推进与能源 (3)</span><span class="en">Propulsion &amp; BMS (3)</span></button>
+          <button type="button" class="fv-filter-btn" onclick="filterStpa('cabin', this)"><span class="cn">客舱与避障感知 (2)</span><span class="en">Cabin &amp; Sense (2)</span></button>
+        </div>
+
+        <div class="fv-table-wrap">
+          <table class="fv-table" id="stpaMatrixTable">
+            <thead>
+              <tr>
+                <th>UCA ID</th>
+                <th><span class="cn">控制动作与类型</span><span class="en">Control Action &amp; Type</span></th>
+                <th><span class="cn">致因场景</span><span class="en">Loss Scenario</span></th>
+                <th><span class="cn">派生安全约束</span><span class="en">Safety Constraint</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-domain="c2">
+                <td><code>UCA-01</code></td>
+                <td><span class="cn"><strong>失联 Fail-Safe 自主迫降触发</strong><br><span class="fv-badge fv-badge-critical">过晚提供</span></span><span class="en"><strong>Fail-Safe Auto-Land</strong><br><span class="fv-badge fv-badge-critical">Too Late</span></span></td>
+                <td><span class="cn">4G/5G 跨基站切换抖动致心跳超时计时器反复清零，延误低电量改降窗口。</span><span class="en">Cellular handoff jitter resets link-loss timer repeatedly, delaying divert.</span></td>
+                <td><span class="cn">累计丢包率门限 + 25% SOC 强制本地自主返航，不依赖 C2 确认</span><span class="en">Packet-loss integral + 25% SOC auto-RTH independent of C2</span></td>
+              </tr>
+              <tr data-domain="c2">
+                <td><code>UCA-02</code></td>
+                <td><span class="cn"><strong>调度中心多机协同避让指令</strong><br><span class="fv-badge fv-badge-high">未提供</span></span><span class="en"><strong>Fleet Deconfliction</strong><br><span class="fv-badge fv-badge-high">Not Provided</span></span></td>
+                <td><span class="cn">景区高峰期多架 EH216-S 同域起降，调度端时钟异步致进近窗口重叠。</span><span class="en">Clock skew at busy scenic vertiports overlaps approach slots.</span></td>
+                <td><span class="cn">机载 ADS-B / UWB 端到端独立间隔保护，强制悬停等待</span><span class="en">Onboard ADS-B/UWB separation floor overrides ground slot</span></td>
+              </tr>
+              <tr data-domain="c2">
+                <td><code>UCA-03</code></td>
+                <td><span class="cn"><strong>地面站远程迫降指令</strong><br><span class="fv-badge fv-badge-high">误提供（在非净空区）</span></span><span class="en"><strong>Remote Force-Land</strong><br><span class="fv-badge fv-badge-high">Unsafe Target</span></span></td>
+                <td><span class="cn">地面视频回传存在 1.5 s 延迟，操作员下令原地降落时下方恰有游客走入。</span><span class="en">1.5 s video lag hides bystander walking under pad on force-land.</span></td>
+                <td><span class="cn">机载下视雷达/视觉确认净空前拒绝触地，自动微调悬停</span><span class="en">Onboard downward vision/radar vetoes touchdown if pad occupied</span></td>
+              </tr>
+              <tr data-domain="prop">
+                <td><code>UCA-04</code></td>
+                <td><span class="cn"><strong>单组故障电池组接触器断开</strong><br><span class="fv-badge fv-badge-critical">未提供/延迟</span></span><span class="en"><strong>Faulty Pack Isolate</strong><br><span class="fv-badge fv-badge-critical">Not Provided</span></span></td>
+                <td><span class="cn">12 组中某组内部短路拉低公共直流母线电压，拖垮其余 11 组正常供电。</span><span class="en">Shorted pack drags down shared DC bus across remaining 11 packs.</span></td>
+                <td><span class="cn">每组配置双向固态断路/理想二极管防倒灌，1 ms 内隔离</span><span class="en">Per-pack bidirectional isolation / diode prevents bus drag</span></td>
+              </tr>
+              <tr data-domain="prop">
+                <td><code>UCA-05</code></td>
+                <td><span class="cn"><strong>同臂共轴单桨失效扭矩补偿</strong><br><span class="fv-badge fv-badge-critical">参数过量</span></span><span class="en"><strong>Coaxial Torque Comp.</strong><br><span class="fv-badge fv-badge-critical">Excessive</span></span></td>
+                <td><span class="cn">上桨失效后下桨瞬间超频至极限转速，引发气动共振与过温降额。</span><span class="en">Lower rotor overspeeds post-upper failure, causing thermal derate.</span></td>
+                <td><span class="cn">16 桨全局均分推力重构（非单臂盲目满载）+ 立即改降</span><span class="en">Redistribute thrust globally across all 8 arms + immediate divert</span></td>
+              </tr>
+              <tr data-domain="prop">
+                <td><code>UCA-06</code></td>
+                <td><span class="cn"><strong>表决飞控健康切换指令</strong><br><span class="fv-badge fv-badge-high">错误通道表决胜出</span></span><span class="en"><strong>FCC Channel Switch</strong><br><span class="fv-badge fv-badge-high">Wrong Winner</span></span></td>
+                <td><span class="cn">3 个气压静压孔同时被暴雨/昆虫局部堵塞，三路表决一致输出错误高度。</span><span class="en">Rain clogs static ports simultaneously, fooling 3-way baro vote.</span></td>
+                <td><span class="cn">结合 GNSS、激光/毫米波高度计做异构传感器交叉残差校验</span><span class="en">Dissimilar fusion with GNSS + radar/laser AGL cross-check</span></td>
+              </tr>
+              <tr data-domain="cabin">
+                <td><code>UCA-07</code></td>
+                <td><span class="cn"><strong>起飞前舱门与安全带闭锁校验</strong><br><span class="fv-badge fv-badge-high">误放行</span></span><span class="en"><strong>Cabin Door/Belt Interlock</strong><br><span class="fv-badge fv-badge-high">False Pass</span></span></td>
+                <td><span class="cn">乘客在起飞滑跑阶段自行解开安全带或尝试推开鸥翼门。</span><span class="en">Passenger unbuckles or pushes door latch during climb-out.</span></td>
+                <td><span class="cn">离地即电子锁死舱门外开机构 + 安全带解开语音告警并缓降</span><span class="en">Auto-lock doors airborne + belt-unbuckle voice alert &amp; abort</span></td>
+              </tr>
+              <tr data-domain="cabin">
+                <td><code>UCA-08</code></td>
+                <td><span class="cn"><strong>低空非合作障碍避让机动</strong><br><span class="fv-badge fv-badge-med">未提供</span></span><span class="en"><strong>Non-Coop Obstacle Avoid</strong><br><span class="fv-badge fv-badge-med">Not Provided</span></span></td>
+                <td><span class="cn">飞鸟群或未经报备的民用消费级无人机闯入景区预设低空航线。</span><span class="en">Flock of birds or rogue consumer drone enters fixed scenic route.</span></td>
+                <td><span class="cn">前向毫米波/视觉实时感知制动悬停 + 调度中心航线动态绕飞</span><span class="en">Forward radar/vision auto-brake hover + GCS route replan</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 04 -->
+        <h2 id="fta-fmea"><span class="cn">04 16 旋翼共轴冗余 FTA、DFMEA 与共因分析（CCA）</span><span class="en">04 16-Rotor Coaxial FTA, DFMEA &amp; Common Cause Analysis</span></h2>
+        <p class="cn">
+          从结构数量上看，EH216-S 的 8 臂 16 电机拥有远超六旋翼的独立余度；但共因分析（CCA）与最小割集建模揭示了两个必须严控的工程边界：① <strong>同臂共轴干涉</strong>（上桨飞脱击中同臂下桨，使单臂瞬间双失效）；② <strong>共享软件/电调/传感器共因因子 β</strong>。
+        </p>
+        <p class="en">
+          Statistically, 16 motors far exceed hexacopter redundancy. However, CCA and minimal cut-set modeling expose two critical choke points: coaxial rotor-to-rotor strike cascades on the same arm, and shared software/inverter β-factors.
+        </p>
+
+        <!-- Custom Vector SVG #2: EH216-S FTA -->
+        <figure class="fv-figure">
+          <svg viewBox="0 0 760 290" role="img" aria-label="亿航 EH216-S 顶事件故障树分析图">
+            <rect width="760" height="290" fill="#fbfcfd"/>
+            <text x="18" y="22" fill="#0f3b38" font-size="11.5" font-weight="700" font-family="sans-serif">EH216-S 故障树 (FTA) — 顶事件 T1：无人驾驶载人飞行失控坠毁</text>
+            <line x1="18" y1="30" x2="742" y2="30" stroke="#d6dde0"/>
+
+            <rect x="210" y="40" width="340" height="36" fill="#8e2424"/>
+            <text x="380" y="62" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">T1: 无人载人飞行失控坠毁 / 非净空硬撞击 (OC 目标 ≤10⁻⁸–10⁻⁹/fh)</text>
+
+            <line x1="380" y1="76" x2="380" y2="92" stroke="#195e58" stroke-width="1.5"/>
+            <rect x="356" y="92" width="48" height="20" rx="10" fill="#ffffff" stroke="#195e58" stroke-width="1.5"/>
+            <text x="380" y="106" fill="#195e58" font-size="10" font-weight="700" text-anchor="middle" font-family="ui-monospace, monospace">OR</text>
+            <line x1="95" y1="122" x2="665" y2="122" stroke="#195e58" stroke-width="1.5"/>
+            <line x1="380" y1="112" x2="380" y2="122" stroke="#195e58" stroke-width="1.5"/>
+
+            <line x1="95" y1="122" x2="95" y2="140" stroke="#195e58" stroke-width="1.4"/>
+            <line x1="285" y1="122" x2="285" y2="140" stroke="#195e58" stroke-width="1.4"/>
+            <line x1="475" y1="122" x2="475" y2="140" stroke="#195e58" stroke-width="1.4"/>
+            <line x1="665" y1="122" x2="665" y2="140" stroke="#195e58" stroke-width="1.4"/>
+
+            <rect x="16" y="140" width="158" height="122" fill="#e7f1ef" stroke="#195e58" stroke-width="1.3"/>
+            <text x="95" y="162" fill="#0f3b38" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">B1: 同臂共轴级联/三发失效</text>
+            <text x="95" y="182" fill="#345955" font-size="8.8" text-anchor="middle" font-family="sans-serif">上桨断飞击中同臂下桨</text>
+            <text x="95" y="198" fill="#345955" font-size="8.8" text-anchor="middle" font-family="sans-serif">或 16 中 ≥3 独立电机失效</text>
+            <text x="95" y="240" fill="#9a5b13" font-size="8.5" font-weight="700" text-anchor="middle" font-family="ui-monospace, monospace">CS1: Coaxial Cascade</text>
+
+            <rect x="206" y="140" width="158" height="122" fill="#e7f1ef" stroke="#195e58" stroke-width="1.3"/>
+            <text x="285" y="162" fill="#0f3b38" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">B2: 电推/飞控软件共因</text>
+            <text x="285" y="182" fill="#345955" font-size="8.8" text-anchor="middle" font-family="sans-serif">同源电调固件 BUG 或</text>
+            <text x="285" y="198" fill="#345955" font-size="8.8" text-anchor="middle" font-family="sans-serif">表决飞控共模异常</text>
+            <text x="285" y="240" fill="#9a5b13" font-size="8.5" font-weight="700" text-anchor="middle" font-family="ui-monospace, monospace">CS2 / CS3: β·λ_EPU + CCF</text>
+
+            <rect x="396" y="140" width="158" height="122" fill="#fdf5e7" stroke="#c69148" stroke-width="1.3"/>
+            <text x="475" y="162" fill="#9a5b13" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">B3: C2 失联 ∧ 迫降感知漏检</text>
+            <text x="475" y="182" fill="#5e4b2b" font-size="8.8" text-anchor="middle" font-family="sans-serif">4G/5G 长时间遮挡盲区</text>
+            <text x="475" y="198" fill="#5e4b2b" font-size="8.8" text-anchor="middle" font-family="sans-serif">∧ 机载下视着陆区误判</text>
+            <text x="475" y="240" fill="#9a5b13" font-size="8.5" font-weight="700" text-anchor="middle" font-family="ui-monospace, monospace">CS4: λ_C2 × P_SenseMiss</text>
+
+            <rect x="586" y="140" width="158" height="122" fill="#fbeeee" stroke="#c36b6b" stroke-width="1.3"/>
+            <text x="665" y="162" fill="#8e2424" font-size="10" font-weight="700" text-anchor="middle" font-family="sans-serif">B4: 12 电池组级联热失控</text>
+            <text x="665" y="182" fill="#5e2a2a" font-size="8.8" text-anchor="middle" font-family="sans-serif">高压直流母线倒灌故障</text>
+            <text x="665" y="198" fill="#5e2a2a" font-size="8.8" text-anchor="middle" font-family="sans-serif">或密集舱底热蔓延侵入</text>
+            <text x="665" y="240" fill="#8e2424" font-size="8.5" font-weight="700" text-anchor="middle" font-family="sans-serif">（高风险火情）</text>
+          </svg>
+          <figcaption>
+            <span class="cn">图 2：EH216-S 故障树逻辑架构。16 旋翼的高独立冗余主要防护随机单发故障，对共轴同臂碎裂及 C2×感知双盲组合需单独隔离验证。</span>
+            <span class="en">Figure 2: EH216-S Fault Tree highlighting coaxial cascade, shared β-CCF, C2×perception blind spots, and 12-pack bus isolation.</span>
+          </figcaption>
+        </figure>
+
+        <!-- Interactive Widget #2: 16-Rotor FTA Simulator -->
+        <section class="sim-card" id="fta-reliability-sim" aria-label="16 旋翼共轴冗余 FTA 仿真器">
+          <div class="sim-header">
+            <h4>
+              <span class="cn">交互式 16 旋翼共轴冗余与 C2 链路 FTA 最小割集仿真器</span>
+              <span class="en">Interactive 16-Rotor Coaxial &amp; C2 Link FTA Simulator</span>
+            </h4>
+            <button type="button" class="sim-reset-btn" onclick="resetFtaSim()">
+              <span class="cn">重置基准参数</span><span class="en">Reset Defaults</span>
+            </button>
+          </div>
+          <div class="sim-grid">
+            <div class="sim-controls">
+              <div class="sim-control">
+                <label><span><span class="cn">单电推单元失效率 λ<sub>EPU</sub></span><span class="en">Single EPU Failure Rate</span></span><span class="val" id="valFtaEpu">5×10⁻⁵ /fh</span></label>
+                <input type="range" id="ftaLambdaEpu" min="1" max="50" step="1" value="5">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">电推软件/器件共因 β 因子</span><span class="en">DEP Common-Cause β Factor</span></span><span class="val" id="valFtaBeta">1.5%</span></label>
+                <input type="range" id="ftaBeta" min="0.2" max="8.0" step="0.1" value="1.5">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">单臂共轴断桨波及同臂对桨概率</span><span class="en">Coaxial Same-Arm Cascade Prob.</span></span><span class="val" id="valFtaCoax">10%</span></label>
+                <input type="range" id="ftaCoax" min="2" max="40" step="2" value="10">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">表决飞控 / 12 电池组共因失效率</span><span class="en">Voting FCC / 12-Pack CCF Rate</span></span><span class="val" id="valFtaFcc">0.5×10⁻⁷ /fh</span></label>
+                <input type="range" id="ftaFcc" min="0.1" max="5.0" step="0.1" value="0.5">
+              </div>
+              <div class="sim-control">
+                <label><span><span class="cn">4G/5G C2 链路超时触发备降频次</span><span class="en">C2 Outage Fail-Safe Rate</span></span><span class="val" id="valFtaC2">2.0×10⁻⁴ /fh</span></label>
+                <input type="range" id="ftaC2" min="0.5" max="10.0" step="0.5" value="2.0">
+              </div>
+            </div>
+            <div class="sim-results">
+              <div class="sim-metric">
+                <span class="lbl"><span class="cn">推进系统总失控率</span><span class="en">Total DEP Loss Rate</span></span>
+                <strong class="num" id="outFtaProp">—</strong>
+              </div>
+              <div class="sim-metric">
+                <span class="lbl"><span class="cn">整机顶事件概率 P<sub>cat</sub></span><span class="en">Total Top Event P<sub>cat</sub></span></span>
+                <strong class="num" id="outFtaTotal">—</strong>
+              </div>
+              <div class="sim-metric wide">
+                <span class="lbl"><span class="cn">当前主导最小割集</span><span class="en">Dominant Minimal Cut Set</span></span>
+                <strong class="num" style="font-size:14px;" id="outFtaDom">—</strong>
+              </div>
+              <div class="sim-metric wide" id="outFtaVerdictBox">
+                <span class="lbl"><span class="cn">OC 商业运行适航裕度结论</span><span class="en">OC Commercial Safety Verdict</span></span>
+                <strong class="num" style="font-size:13.5px;" id="outFtaVerdict">—</strong>
+              </div>
+            </div>
+          </div>
+          <div class="sim-chart-box">
+            <canvas id="ftaBarCanvas" aria-label="16 旋翼故障树最小割集对数概率对比图"></canvas>
+          </div>
+        </section>
+
+        <!-- Section 05 -->
+        <h2 id="sotif"><span class="cn">05 无驾驶员条件下的 SOTIF（ISO 21448）风险剖析</span><span class="en">05 Autonomous SOTIF Analysis (ISO 21448)</span></h2>
+        <p class="cn">
+          参照 <code>ISO 21448:2022</code><sup><a class="fv-citation" href="#ref6">[6]</a></sup>，即使 EH216-S 全部 16 台电机和 12 组电池毫无硬件损坏，无人驾驶载人运行仍面临四类典型的功能不足与触发条件：
+        </p>
+        <p class="en">
+          Per <code>ISO 21448:2022</code><sup><a class="fv-citation" href="#ref6">[6]</a></sup>, even with zero hardware failures, pilotless passenger flights face four primary functional-insufficiency triggers:
+        </p>
+        <ul>
+          <li><span class="cn"><strong>城市高楼峡谷 GNSS 多径与 4G/5G 垂直波瓣盲区：</strong>地面通信基站天线主要面向地面覆网，在 100–200 m AGL 空域易出现切换掉线；高楼遮挡 GNSS 信号时，必须依靠惯导与视觉里程计在返航窗内维持精准悬停对准。</span><span class="en"><strong>Urban Canyon GNSS &amp; Cellular Lobes:</strong> Terrestrial 4G/5G towers tilt downward, risking vertical coverage gaps at 100–200 m AGL while urban multipath degrades GNSS accuracy.</span></li>
+          <li><span class="cn"><strong>复杂光照下“备降场地表面状态误判”：</strong>下视视觉传感器在强水面反光、夜间或雪地反光下，可能将浅水坑、刚浇筑未干地面或临时帐篷误判为平坦安全着陆区。</span><span class="en"><strong>Landing Pad Surface Misclassification:</strong> Glare over shallow water, wet tarmac, or temporary tents can deceive downward vision sensors during Fail-Safe touchdowns.</span></li>
+          <li><span class="cn"><strong>无安全员在机条件下的乘客突发健康与误操作：</strong>两座客舱内乘客出现惊恐、解开安全带或突发疾病时，地面调度只能通过音频安抚并选择最近备降场提前迫降。</span><span class="en"><strong>Cabin Passenger Distress/Misuse:</strong> Without an onboard flight attendant or pilot, passenger panic or medical emergencies require GCS audio link and immediate automated diversion.</span></li>
+        </ul>
+
+        <!-- Section 06 -->
+        <h2 id="cyber"><span class="cn">06 12 组电池热安全与 4G/5G 信息安全 TARA（ISO/SAE 21434）</span><span class="en">06 12-Pack Thermal Safety &amp; C2 Cybersecurity TARA</span></h2>
+        <p class="cn">
+          EH216-S 标配约 17 kWh 液态锂电池分散在 12 组独立电池包中<sup><a class="fv-citation" href="#ref3">[3]</a></sup>，单包能量较小（~1.4 kWh），天然降低了单体热失控波及整机的总能量密度；但高频商业观光起降（约 120 分钟充电循环）要求严格监控电芯快充析锂及客舱底部防火隔热。在网络安全侧，依据 <code>ISO/SAE 21434:2021</code><sup><a class="fv-citation" href="#ref7">[7]</a></sup> 对关键链路进行 TARA 评估：
+        </p>
+        <p class="en">
+          Splitting ~17 kWh across 12 isolated ~1.4 kWh packs<sup><a class="fv-citation" href="#ref3">[3]</a></sup> limits per-module thermal energy, though high-turnaround commercial ops demand strict cycle monitoring. On the cyber side, <code>ISO/SAE 21434:2021</code><sup><a class="fv-citation" href="#ref7">[7]</a></sup> TARA focuses on the 4G/5G C2 pipeline:
+        </p>
+        <div class="fv-table-wrap">
+          <table class="fv-table">
+            <thead>
+              <tr>
+                <th><span class="cn">威胁资产</span><span class="en">Asset</span></th>
+                <th><span class="cn">攻击场景</span><span class="en">Attack Scenario</span></th>
+                <th><span class="cn">风险</span><span class="en">Risk</span></th>
+                <th><span class="cn">关键安全控制措施</span><span class="en">Security Control</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>T1</code> 4G/5G C2 数据链</td>
+                <td><span class="cn">伪基站中间人阻断或重放非法迫降/偏航指令</span><span class="en">Rogue base station spoofing / replay of divert commands</span></td>
+                <td><span class="fv-badge fv-badge-critical">Critical</span></td>
+                <td><span class="cn">国密/TLS 双向证书加密 + 机载航线地理围栏硬边界拒绝越界指令</span><span class="en">Mutual crypto auth + onboard geofence rejects out-of-corridor commands</span></td>
+              </tr>
+              <tr>
+                <td><code>T2</code> GNSS 导航定位</td>
+                <td><span class="cn">低功率地面射频欺骗仪诱偏无人飞行轨迹</span><span class="en">RF GNSS spoofing lures autonomous trajectory</span></td>
+                <td><span class="fv-badge fv-badge-critical">High</span></td>
+                <td><span class="cn">多频多星抗欺骗解算 + 视觉惯导/气压异常跳变剥离</span><span class="en">Multi-constellation anti-spoof + IMU/VIO divergence rejection</span></td>
+              </tr>
+              <tr>
+                <td><code>T3</code> 地面集群调度服务器</td>
+                <td><span class="cn">调度中心遭勒索或篡改，向多架机同时下发冲突航线</span><span class="en">Compromised GCS pushes conflicting routes to fleet</span></td>
+                <td><span class="fv-badge fv-badge-high">High</span></td>
+                <td><span class="cn">调度端零信任权限 + 机载独立防撞/起飞前签名航线校验</span><span class="en">Zero-trust GCS + signed mission packages + onboard separation guard</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 07 -->
+        <h2 id="vv"><span class="cn">07 场景化 V&amp;V 验证与 OC 常态化运营持续适航</span><span class="en">07 Scenario V&amp;V &amp; OC Continuing Airworthiness</span></h2>
+        <p class="cn">
+          2025 年 3 月 28 日，广东亿航通航与合肥合翼航空正式取得中国民航局首批载人类民用无人驾驶航空器运营合格证（OC）<sup><a class="fv-citation" href="#ref8">[8]</a></sup>，并在广州、合肥、深圳及跨琼州海峡等航线开展常态化观光与点对点验证。依据 <code>ISO 34502</code><sup><a class="fv-citation" href="#ref9">[9]</a></sup> 与 OC 运行规范，其安全闭环高度依赖<strong>“固定航线预勘测 + 起飞前整机自检（BIT）+ 地面站双岗值守 + 定期桨叶/电池健康寿命替换”</strong>。
+        </p>
+        <p class="en">
+          On 28 March 2025, CAAC granted the first commercial OC approvals to EH216-S operators<sup><a class="fv-citation" href="#ref8">[8]</a></sup>, enabling regular sightseeing and cross-strait route validations. Sustained operational safety relies on pre-surveyed corridors, pre-flight BIT, dual GCS operators, and strict rotor/battery life limits.
+        </p>
+
+        <!-- Section 08 -->
+        <h2 id="gsn"><span class="cn">08 GSN v3 安全论据与 OC 商业扩展放行门控核查</span><span class="en">08 GSN v3 Safety Case &amp; Urban OC Scaling Gate Audit</span></h2>
+
+        <!-- Custom Vector SVG #3: GSN v3 -->
+        <figure class="fv-figure">
+          <svg viewBox="0 0 760 300" role="img" aria-label="亿航 EH216-S GSN v3 安全论据结构图">
+            <rect width="760" height="300" fill="#fbfcfd"/>
+            <text x="18" y="22" fill="#0f3b38" font-size="11.5" font-weight="700" font-family="sans-serif">EH216-S GSN v3 安全论据：景区固定航线闭环 (●) vs 高密城区扩展缺口 (◊)</text>
+            <line x1="18" y1="30" x2="742" y2="30" stroke="#d6dde0"/>
+
+            <rect x="215" y="40" width="330" height="44" fill="#0f3b38"/>
+            <text x="380" y="59" fill="#ffffff" font-size="10.5" font-weight="700" text-anchor="middle" font-family="sans-serif">G1: EH216-S 无人载人商业运营在 ODD 内足够安全</text>
+            <text x="380" y="75" fill="#9bdcd3" font-size="9" text-anchor="middle" font-family="sans-serif">已获 TC / AC / PC / OC 支撑景区运行；城区扩展待补证</text>
+
+            <line x1="380" y1="84" x2="380" y2="98" stroke="#195e58" stroke-width="1.4"/>
+            <polygon points="240,98 540,98 520,130 220,130" fill="#e7f1ef" stroke="#195e58" stroke-width="1.3"/>
+            <text x="380" y="118" fill="#0f3b38" font-size="9.8" font-weight="700" text-anchor="middle" font-family="sans-serif">S1: 分硬件冗余、C2 链路、备降密度与电池热隔离四支柱论证</text>
+
+            <line x1="380" y1="130" x2="380" y2="144" stroke="#195e58" stroke-width="1.3"/>
+            <line x1="100" y1="144" x2="660" y2="144" stroke="#195e58" stroke-width="1.3"/>
+            <line x1="100" y1="144" x2="100" y2="158" stroke="#195e58" stroke-width="1.3"/>
+            <line x1="286" y1="144" x2="286" y2="158" stroke="#195e58" stroke-width="1.3"/>
+            <line x1="474" y1="144" x2="474" y2="158" stroke="#195e58" stroke-width="1.3"/>
+            <line x1="660" y1="144" x2="660" y2="158" stroke="#195e58" stroke-width="1.3"/>
+
+            <rect x="20" y="158" width="160" height="46" fill="#ffffff" stroke="#195e58"/>
+            <text x="100" y="177" fill="#0f3b38" font-size="9.5" font-weight="700" text-anchor="middle" font-family="sans-serif">G2: 16桨/12包冗余</text>
+            <text x="100" y="193" fill="#5c636b" font-size="8.2" text-anchor="middle" font-family="sans-serif">已通过 TC 适航符合性</text>
+
+            <rect x="206" y="158" width="160" height="46" fill="#ffffff" stroke="#195e58"/>
+            <text x="286" y="177" fill="#0f3b38" font-size="9.5" font-weight="700" text-anchor="middle" font-family="sans-serif">G3: 景区 OC 运营管控</text>
+            <text x="286" y="193" fill="#5c636b" font-size="8.2" text-anchor="middle" font-family="sans-serif">已获首批 OC 商业运营证</text>
+
+            <rect x="394" y="158" width="160" height="46" fill="#ffffff" stroke="#195e58"/>
+            <text x="474" y="177" fill="#0f3b38" font-size="9.5" font-weight="700" text-anchor="middle" font-family="sans-serif">G4: 城区 C2 与备降密度</text>
+            <text x="474" y="193" fill="#5c636b" font-size="8.2" text-anchor="middle" font-family="sans-serif">高密城峡遮挡与自主避障</text>
+
+            <rect x="580" y="158" width="160" height="46" fill="#ffffff" stroke="#195e58"/>
+            <text x="660" y="177" fill="#0f3b38" font-size="9.5" font-weight="700" text-anchor="middle" font-family="sans-serif">G5: 固态电池升级安全</text>
+            <text x="660" y="193" fill="#5c636b" font-size="8.2" text-anchor="middle" font-family="sans-serif">48–60 min 长航时适航变更</text>
+
+            <line x1="100" y1="204" x2="100" y2="224" stroke="#195e58"/>
+            <line x1="286" y1="204" x2="286" y2="224" stroke="#195e58"/>
+            <line x1="474" y1="204" x2="474" y2="224" stroke="#195e58"/>
+            <line x1="660" y1="204" x2="660" y2="224" stroke="#195e58"/>
+
+            <circle cx="100" cy="252" r="27" fill="#eaf5ef" stroke="#165b3d" stroke-width="1.5"/>
+            <text x="100" y="249" fill="#165b3d" font-size="8.2" font-weight="700" text-anchor="middle" font-family="sans-serif">Sn1 闭环</text>
+            <text x="100" y="261" fill="#2d5b44" font-size="7.5" text-anchor="middle" font-family="sans-serif">TC/AC/PC</text>
+
+            <circle cx="286" cy="252" r="27" fill="#eaf5ef" stroke="#165b3d" stroke-width="1.5"/>
+            <text x="286" y="249" fill="#165b3d" font-size="8.2" font-weight="700" text-anchor="middle" font-family="sans-serif">Sn2 闭环</text>
+            <text x="286" y="261" fill="#2d5b44" font-size="7.5" text-anchor="middle" font-family="sans-serif">2025-03 OC</text>
+
+            <polygon points="474,224 528,252 474,280 420,252" fill="#fdf5e7" stroke="#9a5b13" stroke-width="1.5" stroke-dasharray="4,2"/>
+            <text x="474" y="249" fill="#9a5b13" font-size="8.2" font-weight="700" text-anchor="middle" font-family="sans-serif">◊ 缺口 Sn3</text>
+            <text x="474" y="261" fill="#5e4b2b" font-size="7.5" text-anchor="middle" font-family="sans-serif">城区网联与非合作避障</text>
+
+            <polygon points="660,224 714,252 660,280 606,252" fill="#fdf5e7" stroke="#9a5b13" stroke-width="1.5" stroke-dasharray="4,2"/>
+            <text x="660" y="249" fill="#9a5b13" font-size="8.2" font-weight="700" text-anchor="middle" font-family="sans-serif">◊ 缺口 Sn4</text>
+            <text x="660" y="261" fill="#5e4b2b" font-size="7.5" text-anchor="middle" font-family="sans-serif">新电芯补充型号审定</text>
+          </svg>
+          <figcaption>
+            <span class="cn">图 3：EH216-S GSN v3 安全论据结构。固定景区航线运营已取得完整适航/运营闭环，但高密度城区扩张与长航时固态电池构型仍需补充证据。</span>
+            <span class="en">Figure 3: EH216-S GSN v3 Safety Case contrasting closed scenic OC evidence against open urban-scaling and solid-state battery STC gates.</span>
+          </figcaption>
+        </figure>
+
+        <section class="sim-card" id="safetyGateAudit" aria-label="OC 商业运营安全门控核查">
+          <div class="sim-header">
+            <h4>
+              <span class="cn">交互式 OC 商业扩展安全门控核查清单（8 项门控）</span>
+              <span class="en">Interactive Urban OC Expansion Safety Checklist (8 Gates)</span>
+            </h4>
+          </div>
+          <div class="gate-checklist">
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check" checked>
+              <span><strong>Gate 1 [已闭环]:</strong> <span class="cn">CAAC 型号合格证 (TC) 16 桨与表决飞控适航验证（2023-10）</span><span class="en">CAAC TC approval for 16-rotor &amp; voting FCCs (Oct 2023)</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check" checked>
+              <span><strong>Gate 2 [已闭环]:</strong> <span class="cn">标准适航证 (AC) 与生产许可证 (PC) 批量质量体系获批（2024-03）</span><span class="en">Standard AC &amp; PC mass-production quality certification (Mar 2024)</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check" checked>
+              <span><strong>Gate 3 [已闭环]:</strong> <span class="cn">首批无人载人运营合格证 (OC) 获批开展景区固定航线运营（2025-03）</span><span class="en">Initial CAAC OC granted for scenic fixed-route ops (Mar 2025)</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check" checked>
+              <span><strong>Gate 4 [已闭环]:</strong> <span class="cn">跨琼州海峡等点对点示范航线与 12 组电池隔离实飞验证（2025 年底）</span><span class="en">Cross-strait route &amp; 12-pack BMS isolation flight trials (late 2025)</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check">
+              <span><strong>Gate 5 [待扩展]:</strong> <span class="cn">高密度城市中心建筑群每 1 km² 级应急备降坪网络落地</span><span class="en">Dense urban emergency landing-pad grid (≤1–2 km spacing)</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check">
+              <span><strong>Gate 6 [待扩展]:</strong> <span class="cn">5G-A 低空专网 + 卫星通信异构冗余覆盖 100–300 m AGL 城区盲区</span><span class="en">5G-A low-altitude + satcom diversity eliminating urban vertical gaps</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check">
+              <span><strong>Gate 7 [待扩展]:</strong> <span class="cn">非合作目标（鸟群/黑飞无人机）全天候机载主动感知避撞取证</span><span class="en">All-weather active sense-and-avoid certification vs rogue drones/birds</span></span>
+            </label>
+            <label class="gate-item">
+              <input type="checkbox" class="gate-check">
+              <span><strong>Gate 8 [待扩展]:</strong> <span class="cn">48–60 min 高能量固态电池版本完成补充型号合格证（STC）与热扩散测试</span><span class="en">STC &amp; thermal-propagation certification for 48–60 min solid-state pack</span></span>
+            </label>
+          </div>
+          <div class="sim-results">
+            <div class="sim-metric"><span class="lbl"><span class="cn">安全论据完备度</span><span class="en">Readiness Score</span></span><strong class="num" id="auditScore">50%</strong></div>
+            <div class="sim-metric"><span class="lbl"><span class="cn">已闭合门控</span><span class="en">Closed Gates</span></span><strong class="num" id="auditCount">4 / 8</strong></div>
+          </div>
+          <div class="gate-progress-wrap"><div class="gate-progress-fill" id="auditBarFill"></div></div>
+          <div class="sim-metric wide" id="auditVerdictBox">
+            <span class="lbl"><span class="cn">当前运营放行等级</span><span class="en">Operational Release Verdict</span></span>
+            <strong class="num" style="font-size:13.5px;" id="auditVerdict">—</strong>
+          </div>
+        </section>
+
+        <!-- Section 09 -->
+        <h2 id="recommendations"><span class="cn">09 分级工程安全改进建议</span><span class="en">09 Prioritized Engineering Recommendations</span></h2>
+        <div class="prio-grid">
+          <div class="prio-card p0">
+            <h4><span class="cn">P0 · 城区扩线前置硬要求</span><span class="en">P0 · Urban Scaling Prerequisites</span></h4>
+            <ul>
+              <li><span class="cn">强制配置下视视觉/雷达着陆净空复核，杜绝盲降伤及地面人员。</span><span class="en">Mandate onboard downward pad-clearance verification before touchdown.</span></li>
+              <li><span class="cn">在复杂城峡航线部署 5G 低空专网 + 机载 VIO 抗 GNSS 遮挡融合。</span><span class="en">Require 5G low-altitude coverage + VIO anti-multipath fusion in cities.</span></li>
+            </ul>
+          </div>
+          <div class="prio-card p1">
+            <h4><span class="cn">P1 · 共因与级联防护强化</span><span class="en">P1 · Cascade &amp; CCF Hardening</span></h4>
+            <ul>
+              <li><span class="cn">针对共轴上下桨增加垂直间距/根部防飞脱约束，降低同臂双发级联率。</span><span class="en">Harden blade-root retention to minimize coaxial same-arm strike cascades.</span></li>
+              <li><span class="cn">维持三套表决飞控芯片与编译器的异构多样性（β ≤ 1%）。</span><span class="en">Enforce dissimilar hardware/compiler diversity across voting FCCs.</span></li>
+            </ul>
+          </div>
+          <div class="prio-card p2">
+            <h4><span class="cn">P2 · OC 运营与高周转维护</span><span class="en">P2 · OC Fleet Governance</span></h4>
+            <ul>
+              <li><span class="cn">建立 12 组电池快充循环寿命与析锂在线监测模型。</span><span class="en">Deploy fleet SOH/lithium-plating telemetry across all 12 packs.</span></li>
+              <li><span class="cn">完善客舱乘客突发状况语音安抚与一键最近坪迫降 SOP。</span><span class="en">Standardize cabin distress audio SOP &amp; rapid pad-divert protocols.</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- References -->
+        <h2 id="references"><span class="cn">参考文献 (GB/T 7714—2015)</span><span class="en">References (GB/T 7714—2015)</span></h2>
+        <ol class="fv-reference-list">
+          <li id="ref1">中国民用航空局航空器适航审定司. 亿航 EH216-S 型无人驾驶航空器系统专用条件[S/OL]. 北京: CAAC, 2022-02 [2026-11-23]. <a href="https://www.caac.gov.cn/" target="_blank" rel="noopener">https://www.caac.gov.cn/</a>.</li>
+          <li id="ref2">亿航智能 (EHang Holdings). EH216-S 无人驾驶载人航空器系统官方技术规范与冗余安全白皮书[EB/OL]. 2023–2026 [2026-11-23]. <a href="https://www.ehang.com/" target="_blank" rel="noopener">https://www.ehang.com/</a>.</li>
+          <li id="ref3">Battery Design &amp; eVTOL Technical Directory. EHang EH216-S 12-Pack Battery System (S01-28000-000) &amp; 16-Motor Redundancy Parameters[EB/OL]. 2025 [2026-11-23]. <a href="https://evtol.news/" target="_blank" rel="noopener">https://evtol.news/</a>.</li>
+          <li id="ref4">SAE International. Guidelines and Methods for Conducting the Safety Assessment Process on Civil Aircraft, Systems, and Equipment: ARP4761A[S]. Warrendale: SAE, 2023.</li>
+          <li id="ref5">LEVESON N G, THOMAS J P. STPA Handbook[M]. Cambridge, MA: MIT, 2018.</li>
+          <li id="ref6">International Organization for Standardization. Road vehicles — Safety of the intended functionality (SOTIF): ISO 21448:2022[S]. Geneva: ISO, 2022.</li>
+          <li id="ref7">International Organization for Standardization / SAE International. Road vehicles — Cybersecurity engineering: ISO/SAE 21434:2021[S]. Geneva: ISO, 2021.</li>
+          <li id="ref8">亿航智能 (EHang Holdings). 中国民航局颁发全国首批载人类民用无人驾驶航空器运营合格证 (OC) 官方公告[EB/OL]. (2025-03-28) [2026-11-23]. <a href="https://www.ehang.com/" target="_blank" rel="noopener">https://www.ehang.com/</a>.</li>
+          <li id="ref9">International Organization for Standardization. Road vehicles — Test scenarios for automated driving systems: ISO 34502:2022[S]. Geneva: ISO, 2022.</li>
+          <li id="ref10">Assurance Case Working Group (ACWG). Goal Structuring Notation (GSN) Community Standard Version 3[S/OL]. SCSC, 2021-05 [2026-11-23]. <a href="https://scsc.uk/" target="_blank" rel="noopener">https://scsc.uk/</a>.</li>
+          <li id="ref11">张玉新. 飞行汽车技术基础 (Fundamentals of Flying Vehicle Technology)[EB/OL]. 吉林大学自动驾驶安全联合实验室, 2026 [2026-11-23]. <a href="https://lab.autozyx.com/fundamentals-of-flying-vehicle-technology/" target="_blank" rel="noopener">https://lab.autozyx.com/fundamentals-of-flying-vehicle-technology/</a>.</li>
+          <li id="ref12">DARMSTADT P R, PATHAK S, KRANTZ T, et al. Design Concepts to Meet EASA SC-VTOL-01 Single Failure Criteria[C]//VFS 78th Annual Forum. 2022. DOI: <a href="https://doi.org/10.4050/F-0078-2022-17608" target="_blank" rel="noopener">10.4050/F-0078-2022-17608</a>.</li>
+        </ol>
+      </article>
+
+      <aside class="fv-evidence-rail" aria-label="安全分析图例">
+        <p class="fv-rail-title"><span class="cn">安全严酷度图例</span><span class="en">Severity Legend</span></p>
+        <ul>
+          <li><span class="fv-badge fv-badge-critical">Catastrophic / Critical</span><br><span class="cn">无人可接管条件下导致坠机或热爆燃，要求 DAL A 与表决隔离。</span><span class="en">Unrecoverable crash or fire without pilot; requires DAL A voting.</span></li>
+          <li><span class="fv-badge fv-badge-high">Hazardous / High</span><br><span class="cn">非净空迫降或C2/调度失效风险，须具备机载独立闭锁。</span><span class="en">Occupied-pad or C2 outage risk; needs onboard safety guards.</span></li>
+          <li><span class="fv-badge fv-badge-med">Major</span><br><span class="cn">单包/局部降级，自动改降最近备降坪。</span><span class="en">Localized degradation triggering immediate pad divert.</span></li>
+        </ul>
+        <div class="fv-rail-card">
+          <strong><span class="cn">EH216-S 作业核查</span><span class="en">EH216-S Checklist</span></strong>
+          <span class="cn">✓ 根目录 <code>index.html</code><br>✓ 无人驾驶全备份架构 + OC 运营安全分析<br>✓ 3 个交互安全工具 + 中英切换</span>
+          <span class="en">✓ Root <code>index.html</code><br>✓ Pilotless redundancy + OC safety scope<br>✓ 3 interactive tools + CN/EN toggle</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="fv-footer">
+    <div class="container">
+      <p><span class="cn"><strong>《飞行汽车技术基础（2026）》课程作业-2：全方位系统安全分析</strong> · 对象：亿航智能 EH216-S</span><span class="en"><strong>Fundamentals of Flying Vehicle Technology (2026) · Assignment 2</strong> · Subject: EHang EH216-S</span></p>
+    </div>
+  </footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>
